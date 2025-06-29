@@ -136,18 +136,48 @@ export default function ChannelInfoPanel({
     });
   };
 
+  // FIXED: Proper invite link generation and handling
   const generateInviteLink = () => {
     const link = `https://securechat.app/invite/${channel.id}/${Math.random().toString(36).substr(2, 9)}`;
     setInviteLink(link);
     setShowInviteModal(true);
+    
+    toast({
+      title: "Invite Link Generated! 🔗",
+      description: "Share this link to invite people to the channel"
+    });
   };
 
   const copyInviteLink = () => {
-    navigator.clipboard.writeText(inviteLink);
-    toast({
-      title: "Invite Link Copied! 📋",
-      description: "Share this link to invite people to the channel"
-    });
+    if (inviteLink) {
+      navigator.clipboard.writeText(inviteLink);
+      toast({
+        title: "Invite Link Copied! 📋",
+        description: "Share this link to invite people to the channel"
+      });
+    }
+  };
+
+  const shareInviteLink = async () => {
+    if (navigator.share && inviteLink) {
+      try {
+        await navigator.share({
+          title: `Join ${channel.name} on SecureChat`,
+          text: `You're invited to join the ${channel.name} channel on SecureChat!`,
+          url: inviteLink
+        });
+        toast({
+          title: "Invite Shared! 📤",
+          description: "Invitation has been shared successfully"
+        });
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          copyInviteLink(); // Fallback to copy
+        }
+      }
+    } else {
+      copyInviteLink(); // Fallback to copy
+    }
   };
 
   const formatDate = (dateString) => {
@@ -545,7 +575,7 @@ export default function ChannelInfoPanel({
         </motion.div>
       </motion.div>
 
-      {/* Invite Modal */}
+      {/* FIXED: Invite Modal with proper functionality */}
       <AnimatePresence>
         {showInviteModal && (
           <motion.div
@@ -589,10 +619,7 @@ export default function ChannelInfoPanel({
                   <Button variant="outline" className="flex-1" onClick={() => setShowInviteModal(false)}>
                     Close
                   </Button>
-                  <Button className="flex-1" onClick={() => {
-                    copyInviteLink();
-                    setShowInviteModal(false);
-                  }}>
+                  <Button className="flex-1" onClick={shareInviteLink}>
                     <Share className="w-4 h-4 mr-2" />
                     Share Link
                   </Button>

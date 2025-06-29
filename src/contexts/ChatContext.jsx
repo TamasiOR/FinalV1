@@ -151,7 +151,7 @@ export function ChatProvider({ children }) {
       lastActivity: new Date().toISOString(),
       settings: {
         autoDelete: true,
-        deleteTimer: 5000,
+        deleteTimer: 5000, // 5 seconds
         encryption: true
       }
     };
@@ -210,16 +210,20 @@ export function ChatProvider({ children }) {
       const updatedActiveChat = updatedChats.find(c => c.id === chatId);
       setActiveChat(updatedActiveChat);
 
-      // FIXED: Improved auto-delete mechanism
-      if (message.autoDelete) {
+      // FIXED: Enhanced auto-delete mechanism with proper timing
+      if (message.autoDelete && message.deleteTimer > 0) {
+        console.log(`Setting auto-delete for message ${messageId} in ${message.deleteTimer}ms`);
+        
         // Clear any existing timeout for this message
         if (deleteTimeoutsRef.current.has(messageId)) {
           clearTimeout(deleteTimeoutsRef.current.get(messageId));
         }
 
-        // Mark message as being deleted to prevent UI flicker
+        // Set deletion timeout
         const deleteTimeout = setTimeout(() => {
-          // Mark as deleting first
+          console.log(`Auto-deleting message ${messageId}`);
+          
+          // Mark as deleting first for UI feedback
           setDeletingMessages(prev => new Set(prev).add(messageId));
           
           // Small delay to allow UI to show deletion state
@@ -228,9 +232,11 @@ export function ChatProvider({ children }) {
             setChats(currentChats => {
               const newChats = currentChats.map(c => {
                 if (c.id === chatId) {
+                  const filteredMessages = (c.messages || []).filter(m => m.id !== messageId);
+                  console.log(`Removed message ${messageId}, ${filteredMessages.length} messages remaining`);
                   return {
                     ...c,
-                    messages: (c.messages || []).filter(m => m.id !== messageId)
+                    messages: filteredMessages
                   };
                 }
                 return c;
@@ -256,7 +262,13 @@ export function ChatProvider({ children }) {
             
             // Clean up timeout reference
             deleteTimeoutsRef.current.delete(messageId);
-          }, 200); // Small delay for smooth UI transition
+            
+            // Show toast notification
+            toast({
+              title: "Message Auto-Deleted 🔥",
+              description: "Message was automatically deleted for privacy"
+            });
+          }, 300); // Small delay for smooth UI transition
         }, message.deleteTimer);
 
         // Store timeout reference

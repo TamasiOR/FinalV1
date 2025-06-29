@@ -28,27 +28,49 @@ export default function Settings() {
   const { currentTheme, themes, switchTheme } = useTheme();
   const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [settings, setSettings] = useState({
-    autoDelete: true,
-    deleteTimer: 5,
-    readReceipts: true,
-    typingIndicators: true,
-    locationSharing: false,
-    notifications: true,
-    soundEnabled: true,
-    encryptionEnabled: true
+  const [settings, setSettings] = useState(() => {
+    // Load settings from localStorage
+    const saved = localStorage.getItem('securechat-app-settings');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      }
+    }
+    
+    // Default settings
+    return {
+      autoDelete: true,
+      deleteTimer: 5, // seconds
+      readReceipts: true,
+      typingIndicators: true,
+      locationSharing: false,
+      notifications: true,
+      soundEnabled: true,
+      encryptionEnabled: true
+    };
   });
 
+  // Save settings to localStorage whenever they change
+  const saveSettings = (newSettings) => {
+    setSettings(newSettings);
+    localStorage.setItem('securechat-app-settings', JSON.stringify(newSettings));
+  };
+
   const handleSettingChange = (key, value) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+    const newSettings = { ...settings, [key]: value };
+    saveSettings(newSettings);
+    
     toast({
       title: "Setting Updated",
-      description: `${key} has been ${value ? 'enabled' : 'disabled'}`
+      description: `${key.replace(/([A-Z])/g, ' $1').toLowerCase()} has been ${value ? 'enabled' : 'disabled'}`
     });
   };
 
   const handleDeleteTimerChange = (value) => {
-    setSettings(prev => ({ ...prev, deleteTimer: value[0] }));
+    const newSettings = { ...settings, deleteTimer: value[0] };
+    saveSettings(newSettings);
   };
 
   const handleExportData = () => {
@@ -108,6 +130,7 @@ export default function Settings() {
           if (data.contacts) localStorage.setItem('securechat-contacts', JSON.stringify(data.contacts));
           if (data.statuses) localStorage.setItem('securechat-statuses', JSON.stringify(data.statuses));
           if (data.channels) localStorage.setItem('securechat-channels', JSON.stringify(data.channels));
+          if (data.settings) saveSettings(data.settings);
           
           toast({
             title: "Data Imported! 📥",
@@ -135,6 +158,7 @@ export default function Settings() {
     localStorage.removeItem('securechat-statuses');
     localStorage.removeItem('securechat-channels');
     localStorage.removeItem('securechat-notification-settings');
+    localStorage.removeItem('securechat-app-settings');
     
     // Clear any other app-specific data
     Object.keys(localStorage).forEach(key => {
