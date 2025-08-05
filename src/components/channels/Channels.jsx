@@ -8,6 +8,7 @@ import ChannelCreator from '@/components/channels/ChannelCreator';
 import ChannelView from '@/components/channels/ChannelView';
 import ChannelSubscriptionManager from '@/components/channels/ChannelSubscriptionManager';
 import AdvancedChannelSettings from '@/components/channels/AdvancedChannelSettings';
+import ChannelInviteManager from '@/components/channels/ChannelInviteManager';
 import NotificationSettings from '@/components/notifications/NotificationSettings';
 import { Search, Plus, Hash, Users, Bell, BellOff, Settings, ArrowLeft } from 'lucide-react';
 
@@ -20,6 +21,7 @@ export default function Channels() {
   const [showSubscriptionManager, setShowSubscriptionManager] = useState(null);
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(null);
+  const [showInviteManager, setShowInviteManager] = useState(null);
   const [notificationSettings, setNotificationSettings] = useState({});
 
   useEffect(() => {
@@ -242,6 +244,25 @@ export default function Channels() {
     });
   };
 
+  const handleInviteMembers = (channel) => {
+    setShowInviteManager(channel);
+  };
+
+  const handleInviteMember = (memberData) => {
+    toast({
+      title: "Member Invited! 👥",
+      description: "Invitation sent successfully"
+    });
+  };
+
+  const handleUpdateInviteSettings = (channelId, settings) => {
+    localStorage.setItem(`channel-invite-settings-${channelId}`, JSON.stringify(settings));
+    toast({
+      title: "Invite Settings Updated",
+      description: "Invitation settings have been saved"
+    });
+  };
+
   const handleChannelClick = (channel) => {
     setSelectedChannel(channel);
   };
@@ -424,6 +445,19 @@ export default function Channels() {
                       )}
                       
                       <Button
+                        variant="ghost"
+                        size="icon"
+                        className="w-8 h-8"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleInviteMembers(channel);
+                        }}
+                        title="Invite Members"
+                      >
+                        <UserPlus className="w-4 h-4" />
+                      </Button>
+                      
+                      <Button
                         variant="secondary"
                         size="sm"
                         onClick={(e) => {
@@ -509,6 +543,17 @@ export default function Channels() {
                     >
                       Subscribe
                     </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleInviteMembers(channel);
+                      }}
+                      title="Invite Members"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
               </motion.div>
@@ -562,6 +607,15 @@ export default function Channels() {
         onClose={() => setShowNotificationSettings(false)}
         settings={notificationSettings}
         onUpdateSettings={saveNotificationSettings}
+      />
+
+      {/* Channel Invite Manager */}
+      <ChannelInviteManager
+        channel={showInviteManager}
+        isOpen={!!showInviteManager}
+        onClose={() => setShowInviteManager(null)}
+        onInviteMember={handleInviteMember}
+        onUpdateInviteSettings={handleUpdateInviteSettings}
       />
     </div>
   );

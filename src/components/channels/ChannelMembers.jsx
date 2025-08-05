@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { UserPlus, MoreVertical, Star } from 'lucide-react';
 
-export default function ChannelMembers({ members, showMembers }) {
+export default function ChannelMembers({ members, showMembers, onInviteMembers }) {
   if (!showMembers) return null;
 
   return (
@@ -23,11 +23,9 @@ export default function ChannelMembers({ members, showMembers }) {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => toast({
-              title: "🚧 Invite Members",
-              description: "Member invitations aren't implemented yet—but don't worry! You can request them in your next prompt! 🚀"
-            })}
+            onClick={onInviteMembers}
             className="hover:bg-primary/20 transition-all duration-200"
+            title="Invite Members"
           >
             <UserPlus className="w-4 h-4" />
           </Button>

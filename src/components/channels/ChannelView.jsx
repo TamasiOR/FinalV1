@@ -13,6 +13,7 @@ import ChannelMembers from '@/components/channels/ChannelMembers';
 import ChannelHeader from '@/components/channels/ChannelHeader';
 import ChannelInfoPanel from '@/components/channels/ChannelInfoPanel';
 import AdvancedChannelSettings from '@/components/channels/AdvancedChannelSettings';
+import ChannelInviteManager from '@/components/channels/ChannelInviteManager';
 import { Pin, ArrowUp, X, Reply, Send, PinOff } from 'lucide-react';
 
 export default function ChannelView({ channel, onBack }) {
@@ -35,6 +36,7 @@ export default function ChannelView({ channel, onBack }) {
   const [replyText, setReplyText] = useState('');
   const [showChannelInfo, setShowChannelInfo] = useState(false);
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [showInviteManager, setShowInviteManager] = useState(false);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -690,6 +692,25 @@ export default function ChannelView({ channel, onBack }) {
     }
   };
 
+  const handleInviteMembers = () => {
+    setShowInviteManager(true);
+  };
+
+  const handleInviteMember = (memberData) => {
+    toast({
+      title: "Member Invited! 👥",
+      description: "Invitation sent successfully"
+    });
+  };
+
+  const handleUpdateInviteSettings = (channelId, settings) => {
+    localStorage.setItem(`channel-invite-settings-${channelId}`, JSON.stringify(settings));
+    toast({
+      title: "Invite Settings Updated",
+      description: "Invitation settings have been saved"
+    });
+  };
+
   const filteredMessages = searchQuery 
     ? messages.filter(msg => 
         msg.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -726,6 +747,7 @@ export default function ChannelView({ channel, onBack }) {
         onToggleMembers={() => setShowMembers(!showMembers)}
         onShowChannelInfo={() => setShowChannelInfo(true)}
         onShowAdvancedSettings={() => setShowAdvancedSettings(true)}
+        onInviteMembers={handleInviteMembers}
       />
 
       {/* Search Bar */}
@@ -955,6 +977,7 @@ export default function ChannelView({ channel, onBack }) {
           <ChannelMembers 
             members={channelMembers}
             showMembers={showMembers}
+            onInviteMembers={handleInviteMembers}
           />
         </AnimatePresence>
       </div>
@@ -991,12 +1014,7 @@ export default function ChannelView({ channel, onBack }) {
           });
           onBack();
         }}
-        onInviteMembers={() => {
-          toast({
-            title: "Invite Link Generated! 🔗",
-            description: "Share the invite link to add new members to this channel"
-          });
-        }}
+        onInviteMembers={handleInviteMembers}
         onManageMembers={() => {
           toast({
             title: "Member Management",
@@ -1012,6 +1030,15 @@ export default function ChannelView({ channel, onBack }) {
         onClose={() => setShowAdvancedSettings(false)}
         onUpdateChannel={handleUpdateChannel}
         onDeleteChannel={handleDeleteChannel}
+      />
+
+      {/* Channel Invite Manager */}
+      <ChannelInviteManager
+        channel={channel}
+        isOpen={showInviteManager}
+        onClose={() => setShowInviteManager(false)}
+        onInviteMember={handleInviteMember}
+        onUpdateInviteSettings={handleUpdateInviteSettings}
       />
     </div>
   );

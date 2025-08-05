@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { toast } from '@/components/ui/use-toast';
+import ChannelInviteManager from '@/components/channels/ChannelInviteManager';
 import { 
   X, 
   Hash, 
@@ -65,8 +66,7 @@ export default function ChannelInfoPanel({
     pinned: false,
     muted: false
   });
-  const [showInviteModal, setShowInviteModal] = useState(false);
-  const [inviteLink, setInviteLink] = useState('');
+  const [showInviteManager, setShowInviteManager] = useState(false);
 
   // Mock data - in a real app this would come from props or API
   const channelStats = {
@@ -136,48 +136,27 @@ export default function ChannelInfoPanel({
     });
   };
 
-  // FIXED: Proper invite link generation and handling
-  const generateInviteLink = () => {
-    const link = `https://securechat.app/invite/${channel.id}/${Math.random().toString(36).substr(2, 9)}`;
-    setInviteLink(link);
-    setShowInviteModal(true);
-    
+  const handleInviteMembers = () => {
+    setShowInviteManager(true);
+  };
+
+  const handleInviteMember = (memberData) => {
+    // Handle the actual member invitation logic
     toast({
-      title: "Invite Link Generated! 🔗",
-      description: "Share this link to invite people to the channel"
+      title: "Member Invited! 👥",
+      description: `Invitation sent successfully`
     });
   };
 
-  const copyInviteLink = () => {
-    if (inviteLink) {
-      navigator.clipboard.writeText(inviteLink);
-      toast({
-        title: "Invite Link Copied! 📋",
-        description: "Share this link to invite people to the channel"
-      });
-    }
-  };
-
-  const shareInviteLink = async () => {
-    if (navigator.share && inviteLink) {
-      try {
-        await navigator.share({
-          title: `Join ${channel.name} on SecureChat`,
-          text: `You're invited to join the ${channel.name} channel on SecureChat!`,
-          url: inviteLink
-        });
-        toast({
-          title: "Invite Shared! 📤",
-          description: "Invitation has been shared successfully"
-        });
-      } catch (error) {
-        if (error.name !== 'AbortError') {
-          copyInviteLink(); // Fallback to copy
-        }
-      }
-    } else {
-      copyInviteLink(); // Fallback to copy
-    }
+  const handleUpdateInviteSettings = (channelId, settings) => {
+    // Save invite settings for the channel
+    const savedSettings = localStorage.getItem(`channel-invite-settings-${channelId}`);
+    localStorage.setItem(`channel-invite-settings-${channelId}`, JSON.stringify(settings));
+    
+    toast({
+      title: "Invite Settings Updated",
+      description: "Invitation settings have been saved"
+    });
   };
 
   const formatDate = (dateString) => {
@@ -296,7 +275,7 @@ export default function ChannelInfoPanel({
         <Button
           variant="outline"
           className="flex items-center gap-2"
-          onClick={generateInviteLink}
+          onClick={handleInviteMembers}
         >
           <UserPlus className="w-4 h-4" />
           Invite People
@@ -324,6 +303,7 @@ export default function ChannelInfoPanel({
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-foreground">Members ({channelMembers.length})</h3>
         <Button size="sm" onClick={generateInviteLink}>
+        <Button size="sm" onClick={handleInviteMembers}>
           <UserPlus className="w-4 h-4 mr-2" />
           Invite
         </Button>
@@ -575,60 +555,14 @@ export default function ChannelInfoPanel({
         </motion.div>
       </motion.div>
 
-      {/* FIXED: Invite Modal with proper functionality */}
-      <AnimatePresence>
-        {showInviteModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-60 flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-card border border-border rounded-lg w-full max-w-md"
-            >
-              <div className="flex items-center justify-between p-4 border-b border-border">
-                <h3 className="text-lg font-semibold">Invite to #{channel.name}</h3>
-                <Button variant="ghost" size="icon" onClick={() => setShowInviteModal(false)}>
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-
-              <div className="p-4 space-y-4">
-                <div>
-                  <Label>Invite Link</Label>
-                  <div className="flex gap-2 mt-2">
-                    <Input
-                      value={inviteLink}
-                      readOnly
-                      className="flex-1"
-                    />
-                    <Button onClick={copyInviteLink}>
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Share this link to invite people to the channel. The link expires in 7 days.
-                  </p>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1" onClick={() => setShowInviteModal(false)}>
-                    Close
-                  </Button>
-                  <Button className="flex-1" onClick={shareInviteLink}>
-                    <Share className="w-4 h-4 mr-2" />
-                    Share Link
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Channel Invite Manager */}
+      <ChannelInviteManager
+        channel={channel}
+        isOpen={showInviteManager}
+        onClose={() => setShowInviteManager(false)}
+        onInviteMember={handleInviteMember}
+        onUpdateInviteSettings={handleUpdateInviteSettings}
+      />
     </>
   );
 }
